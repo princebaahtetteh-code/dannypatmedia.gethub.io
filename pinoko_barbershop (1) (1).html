@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinoko Barbershop — Daily Profits Tracker (Akim Ofoase)</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c12;
+    --surface: #0d1520;
+    --surface2: #111d2e;
+    --accent: #3b82f6;
+    --accent-light: #60a5fa;
+    --accent-glow: rgba(59,130,246,0.18);
+    --cyan: #06b6d4;
+    --cyan-dim: rgba(6,182,212,0.15);
+    --cream: #e2eaf5;
+    --muted: #4a6080;
+    --red: #ef4444;
+    --green: #22c55e;
+    --border: #162035;
+    --border-bright: #1e3050;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 70% 35% at 50% -5%, rgba(59,130,246,0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 90% 80%, rgba(6,182,212,0.06) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(255,255,255,0.012) 47px, rgba(255,255,255,0.012) 48px),
+      repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(255,255,255,0.012) 47px, rgba(255,255,255,0.012) 48px);
+  }
+
+  header {
+    border-bottom: 1px solid var(--border-bright);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(8,12,18,0.85);
+    backdrop-filter: blur(14px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 18px rgba(59,130,246,0.35);
+  }
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 3px;
+    color: var(--accent-light); line-height: 1;
+  }
+  .logo-sub {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 3.5px; text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+  .header-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); text-align: right; }
+  .header-date span { display: block; color: var(--cream); font-size: 14px; font-weight: 500; margin-top: 2px; }
+
+  /* TABS */
+  .tab-nav {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 32px;
+  }
+  .tab-btn {
+    background: none; border: none; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    padding: 14px 22px; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .tab-btn:hover { color: var(--cream); }
+  .tab-btn.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 32px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 14px; padding: 22px 20px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .summary-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(59,130,246,0.1);
+  }
+  .summary-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), transparent);
+  }
+  .card-label {
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 12px;
+  }
+  .card-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px; letter-spacing: 1px;
+    color: var(--accent-light); line-height: 1;
+  }
+  .card-value.profit { color: var(--green); }
+  .card-value.loss { color: var(--red); }
+  .card-change { margin-top: 8px; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .card-change.up { color: var(--green); }
+  .card-change.down { color: var(--red); }
+
+  /* TWO COLUMN */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 14px; padding: 24px;
+  }
+  .full-panel {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 14px; padding: 24px;
+    margin-bottom: 16px;
+  }
+  .panel-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 2.5px;
+    color: var(--accent-light); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* FORM */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .field label {
+    display: block; font-size: 10px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase;
+    font-family: 'DM Mono', monospace; margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border-bright); border-radius: 9px;
+    color: var(--cream); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; padding: 10px 14px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  }
+  .field select option { background: var(--surface2); }
+
+  .btn-add {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    color: #fff; border: none; border-radius: 9px;
+    padding: 12px; font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 2.5px; cursor: pointer;
+    margin-top: 8px; transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 18px rgba(59,130,246,0.25);
+  }
+  .btn-add:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+
+  .price-hint {
+    font-size: 11px; color: var(--cyan);
+    font-family: 'DM Mono', monospace;
+    margin-top: 4px;
+  }
+
+  /* SERVICE ROWS */
+  .service-row {
+    display: flex; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .service-row:last-child { border-bottom: none; }
+  .service-name { flex: 1; font-size: 14px; }
+  .service-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .service-total { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--accent-light); }
+
+  /* TRANSACTIONS TABLE */
+  .transactions-table { width: 100%; border-collapse: collapse; }
+  .transactions-table th {
+    font-size: 10px; color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase; font-family: 'DM Mono', monospace;
+    text-align: left; padding: 8px 12px;
+    border-bottom: 1px solid var(--border-bright);
+  }
+  .transactions-table td {
+    padding: 11px 12px; font-size: 13px;
+    border-bottom: 1px solid rgba(22,32,53,0.7);
+  }
+  .type-badge {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 5px; font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .type-income { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .type-expense { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .amount-income { color: var(--green); font-family: 'DM Mono', monospace; }
+  .amount-expense { color: var(--red); font-family: 'DM Mono', monospace; }
+  .btn-del {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 12px; padding: 4px 8px;
+    border-radius: 4px; transition: background 0.2s, color 0.2s;
+  }
+  .btn-del:hover { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 32px;
+    color: var(--muted); font-size: 13px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* BAR CHART */
+  .bar-chart {
+    display: flex; gap: 8px; align-items: flex-end;
+    height: 120px; margin-bottom: 12px;
+  }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+  .bar { border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.4s ease; width: 100%; }
+  .bar.income { background: linear-gradient(to top, var(--accent), var(--cyan)); }
+  .bar.expense { background: rgba(239,68,68,0.55); }
+  .bar-label { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .week-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .week-btn {
+    background: var(--surface2); border: 1px solid var(--border-bright);
+    border-radius: 7px; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 6px 14px; cursor: pointer; transition: all 0.2s;
+  }
+  .week-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 0 12px rgba(59,130,246,0.3); }
+
+  /* ---- STAFF SECTION ---- */
+  .staff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .staff-card {
+    background: var(--surface2); border: 1px solid var(--border-bright);
+    border-radius: 12px; padding: 16px;
+    position: relative; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .staff-card:hover { border-color: var(--accent); box-shadow: 0 0 16px rgba(59,130,246,0.08); }
+  .staff-card.active-barber { border-color: var(--green); box-shadow: 0 0 14px rgba(34,197,94,0.1); }
+  .staff-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 1.5px;
+    color: var(--cream); margin-bottom: 4px;
+  }
+  .staff-role { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 12px; }
+  .staff-stat { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .staff-stat-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .staff-stat-val { font-size: 13px; color: var(--accent-light); font-family: 'DM Mono', monospace; }
+  .staff-commission-bar { background: var(--border-bright); border-radius: 4px; height: 4px; margin-top: 10px; }
+  .staff-commission-fill { background: linear-gradient(to right, var(--accent), var(--cyan)); border-radius: 4px; height: 4px; transition: width 0.5s ease; }
+  .btn-staff-del {
+    position: absolute; top: 10px; right: 10px;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 12px; padding: 2px 6px;
+  }
+  .btn-staff-del:hover { color: var(--red); }
+
+  .staff-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end; }
+  .btn-small {
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 18px; font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; letter-spacing: 1.5px; cursor: pointer;
+    white-space: nowrap; transition: opacity 0.2s;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.2);
+  }
+  .btn-small:hover { opacity: 0.85; }
+  .btn-danger {
+    background: rgba(239,68,68,0.15); color: var(--red);
+    border: 1px solid rgba(239,68,68,0.25);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.28); }
+
+  .staff-summary {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 20px;
+  }
+  .staff-summary-card {
+    background: var(--surface2); border: 1px solid var(--border-bright);
+    border-radius: 10px; padding: 14px 16px; text-align: center;
+  }
+  .staff-summary-label { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .staff-summary-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent-light); }
+
+  /* PRICES REFERENCE */
+  .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .price-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface2); border: 1px solid var(--border-bright);
+    border-radius: 9px; padding: 10px 14px;
+    transition: border-color 0.2s;
+  }
+  .price-item:hover { border-color: var(--border-bright); }
+  .price-service { font-size: 13px; }
+  .price-range { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--cyan); }
+
+  .section-divider {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px; letter-spacing: 3px;
+    color: var(--accent); text-transform: uppercase;
+    margin: 20px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-bright);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  @media (max-width: 700px) {
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .staff-grid { grid-template-columns: 1fr 1fr; }
+    .price-grid { grid-template-columns: 1fr 1fr; }
+    .staff-form { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">✂️</div>
+    <div>
+      <div class="logo-text">Pinoko</div>
+      <div class="logo-sub">Barbershop · Akim Ofoase · Daily Tracker</div>
+    </div>
+  </div>
+  <div class="header-date">
+    TODAY
+    <span id="headerDate"></span>
+  </div>
+</header>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('daily')">📊 Daily</button>
+  <button class="tab-btn" onclick="switchTab('staff')">👥 Staff</button>
+  <button class="tab-btn" onclick="switchTab('prices')">💰 Price List</button>
+</div>
+
+<!-- ==================== DAILY TAB ==================== -->
+<div id="tab-daily" class="tab-panel active">
+<main>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="card-label">Today's Revenue</div>
+      <div class="card-value" id="totalRevenue">GH₵ 0.00</div>
+      <div class="card-change" id="revenueCount">0 income entries</div>
+    </div>
+    <div class="summary-card">
+      <div class="card-label">Today's Expenses</div>
+      <div class="card-value" id="totalExpenses">GH₵ 0.00</div>
+      <div class="card-change" id="expenseCount">0 expense entries</div>
+    </div>
+    <div class="summary-card">
+      <div class="card-label">Net Profit</div>
+      <div class="card-value profit" id="netProfit">GH₵ 0.00</div>
+      <div class="card-change up" id="profitMargin">0% margin</div>
+    </div>
+    <div class="summary-card">
+      <div class="card-label">Clients Served</div>
+      <div class="card-value" id="clientCount">0</div>
+      <div class="card-change" id="avgTicket">Avg GH₵ 0 / client</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">✚ Record Entry</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Type</label>
+          <select id="entryType" onchange="updateCategoryOptions()">
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Service / Category</label>
+          <select id="entryCategory" onchange="suggestPrice()"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Amount (GH₵)</label>
+          <input type="number" id="entryAmount" placeholder="0.00" min="0" step="0.01">
+          <div class="price-hint" id="priceHint"></div>
+        </div>
+        <div class="field">
+          <label>Barber</label>
+          <select id="entryBarber">
+            <option value="">— Select Barber —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Note (optional)</label>
+          <input type="text" id="entryNote" placeholder="e.g. Walk-in client">
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="entryDate">
+        </div>
+      </div>
+      <button class="btn-add" onclick="addEntry()">ADD ENTRY</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">📋 Services Breakdown</div>
+      <div id="servicesList"><div class="empty-state">No income recorded today.</div></div>
+    </div>
+  </div>
+
+  <div class="full-panel">
+    <div class="panel-title">📊 Weekly Overview</div>
+    <div class="week-toggle">
+      <button class="week-btn active" onclick="setWeek('this')" id="btnThis">This Week</button>
+      <button class="week-btn" onclick="setWeek('last')" id="btnLast">Last 7 Days</button>
+    </div>
+    <div class="bar-chart" id="barChart"></div>
+    <div style="display:flex;gap:16px;margin-top:8px;">
+      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;"></span> Income</span>
+      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:10px;height:10px;background:rgba(239,68,68,0.55);border-radius:2px;"></span> Expenses</span>
+    </div>
+  </div>
+
+  <div class="full-panel">
+    <div class="panel-title">🧾 All Transactions</div>
+    <div id="transactionsWrap">
+      <div class="empty-state">No transactions yet. Add your first entry above.</div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ==================== STAFF TAB ==================== -->
+<div id="tab-staff" class="tab-panel">
+<main>
+  <div class="full-panel">
+    <div class="panel-title">👥 Add Barber / Staff</div>
+    <div class="staff-form">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="staffName" placeholder="e.g. Kwame">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="staffRole">
+          <option value="Barber">Barber</option>
+          <option value="Apprentice">Apprentice</option>
+          <option value="Senior Barber">Senior Barber</option>
+          <option value="Manager">Manager</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Commission (%)</label>
+        <input type="number" id="staffCommission" placeholder="e.g. 50" min="0" max="100" value="50">
+      </div>
+      <div>
+        <button class="btn-small" onclick="addStaff()">ADD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="staff-summary" id="staffSummary" style="display:none">
+    <div class="staff-summary-card">
+      <div class="staff-summary-label">Total Staff</div>
+      <div class="staff-summary-val" id="staffTotal">0</div>
+    </div>
+    <div class="staff-summary-card">
+      <div class="staff-summary-label">Total Commission Due (Today)</div>
+      <div class="staff-summary-val" id="staffCommTotal">GH₵ 0</div>
+    </div>
+    <div class="staff-summary-card">
+      <div class="staff-summary-label">Shop Cut (Today)</div>
+      <div class="staff-summary-val" id="shopCut">GH₵ 0</div>
+    </div>
+  </div>
+
+  <div class="staff-grid" id="staffGrid">
+    <div class="empty-state" style="grid-column:1/-1">No staff added yet. Add your first barber above.</div>
+  </div>
+</main>
+</div>
+
+<!-- ==================== PRICES TAB ==================== -->
+<div id="tab-prices" class="tab-panel">
+<main>
+  <div class="full-panel">
+    <div class="panel-title">💰 Accra Barbershop Price Guide</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;font-family:'DM Mono',monospace;">Typical prices in Akim Ofoase (2024). Adjust based on your location and clientele.</p>
+
+    <div class="section-divider">✂️ Haircuts</div>
+    <div class="price-grid" style="margin-bottom:20px">
+      <div class="price-item"><span class="price-service">Basic Haircut</span><span class="price-range">GH₵ 20–35</span></div>
+      <div class="price-item"><span class="price-service">Fade (Low/Mid/High)</span><span class="price-range">GH₵ 35–60</span></div>
+      <div class="price-item"><span class="price-service">Skin Fade</span><span class="price-range">GH₵ 50–80</span></div>
+      <div class="price-item"><span class="price-service">Kids Cut (Under 10)</span><span class="price-range">GH₵ 15–25</span></div>
+      <div class="price-item"><span class="price-service">Waves / 360 Waves</span><span class="price-range">GH₵ 40–70</span></div>
+      <div class="price-item"><span class="price-service">Mohawk / Design Cut</span><span class="price-range">GH₵ 50–100</span></div>
+    </div>
+
+    <div class="section-divider">🧔 Beard & Shave</div>
+    <div class="price-grid" style="margin-bottom:20px">
+      <div class="price-item"><span class="price-service">Beard Trim</span><span class="price-range">GH₵ 15–30</span></div>
+      <div class="price-item"><span class="price-service">Hot Towel Shave</span><span class="price-range">GH₵ 25–50</span></div>
+      <div class="price-item"><span class="price-service">Haircut + Beard Combo</span><span class="price-range">GH₵ 50–90</span></div>
+    </div>
+
+    <div class="section-divider">💈 Styling & Treatments</div>
+    <div class="price-grid" style="margin-bottom:20px">
+      <div class="price-item"><span class="price-service">Wash & Style</span><span class="price-range">GH₵ 30–60</span></div>
+      <div class="price-item"><span class="price-service">Cornrows (Simple)</span><span class="price-range">GH₵ 40–80</span></div>
+      <div class="price-item"><span class="price-service">Dreadlocks / Locks</span><span class="price-range">GH₵ 80–200</span></div>
+      <div class="price-item"><span class="price-service">Braids / Box Braids</span><span class="price-range">GH₵ 60–150</span></div>
+      <div class="price-item"><span class="price-service">Color / Tint</span><span class="price-range">GH₵ 80–200</span></div>
+      <div class="price-item"><span class="price-service">Perm / Relaxer</span><span class="price-range">GH₵ 60–120</span></div>
+      <div class="price-item"><span class="price-service">Hair Treatment</span><span class="price-range">GH₵ 40–80</span></div>
+      <div class="price-item"><span class="price-service">Threading</span><span class="price-range">GH₵ 10–20</span></div>
+    </div>
+
+    <div class="section-divider">🏠 Expenses</div>
+    <div class="price-grid">
+      <div class="price-item"><span class="price-service">Monthly Rent (Akim Ofoase)</span><span class="price-range">GH₵ 800–3000</span></div>
+      <div class="price-item"><span class="price-service">ECG Electricity (monthly)</span><span class="price-range">GH₵ 150–400</span></div>
+      <div class="price-item"><span class="price-service">Clippers Blade Set</span><span class="price-range">GH₵ 60–150</span></div>
+      <div class="price-item"><span class="price-service">Barbing Cream / Gel</span><span class="price-range">GH₵ 30–80</span></div>
+      <div class="price-item"><span class="price-service">Spray / Aftershave</span><span class="price-range">GH₵ 20–60</span></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+  const INCOME_SERVICES = [
+    { name: 'Basic Haircut', hint: 'GH₵ 20–35' },
+    { name: 'Fade', hint: 'GH₵ 35–60' },
+    { name: 'Skin Fade', hint: 'GH₵ 50–80' },
+    { name: 'Kids Cut', hint: 'GH₵ 15–25' },
+    { name: 'Waves / 360 Waves', hint: 'GH₵ 40–70' },
+    { name: 'Design Cut', hint: 'GH₵ 50–100' },
+    { name: 'Beard Trim', hint: 'GH₵ 15–30' },
+    { name: 'Hot Towel Shave', hint: 'GH₵ 25–50' },
+    { name: 'Haircut + Beard Combo', hint: 'GH₵ 50–90' },
+    { name: 'Wash & Style', hint: 'GH₵ 30–60' },
+    { name: 'Cornrows', hint: 'GH₵ 40–80' },
+    { name: 'Dreadlocks / Locks', hint: 'GH₵ 80–200' },
+    { name: 'Braids / Box Braids', hint: 'GH₵ 60–150' },
+    { name: 'Color / Tint', hint: 'GH₵ 80–200' },
+    { name: 'Perm / Relaxer', hint: 'GH₵ 60–120' },
+    { name: 'Hair Treatment', hint: 'GH₵ 40–80' },
+    { name: 'Threading', hint: 'GH₵ 10–20' },
+    { name: 'Other Service', hint: '' },
+  ];
+
+  const EXPENSE_CATEGORIES = [
+    { name: 'Rent', hint: '' },
+    { name: 'Electricity (ECG)', hint: '' },
+    { name: 'Water', hint: '' },
+    { name: 'Supplies / Products', hint: '' },
+    { name: 'Clippers / Equipment', hint: '' },
+    { name: 'Staff Pay', hint: '' },
+    { name: 'Mobile Money / MoMo Fee', hint: '' },
+    { name: 'Food / Refreshment', hint: '' },
+    { name: 'Transport', hint: '' },
+    { name: 'Other Expense', hint: '' },
+  ];
+
+  let entries = JSON.parse(localStorage.getItem('barbershop_entries') || '[]');
+  let staff = JSON.parse(localStorage.getItem('barbershop_staff') || '[]');
+  let weekMode = 'this';
+
+  const today = new Date();
+  document.getElementById('entryDate').value = today.toISOString().split('T')[0];
+  document.getElementById('headerDate').textContent = today.toLocaleDateString('en-GH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  function save() {
+    localStorage.setItem('barbershop_entries', JSON.stringify(entries));
+    localStorage.setItem('barbershop_staff', JSON.stringify(staff));
+  }
+
+  function fmt(n) { return 'GH₵ ' + Number(n).toLocaleString('en-GH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function todayStr() { return today.toISOString().split('T')[0]; }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'staff') renderStaff();
+  }
+
+  function updateCategoryOptions() {
+    const type = document.getElementById('entryType').value;
+    const sel = document.getElementById('entryCategory');
+    sel.innerHTML = '';
+    const list = type === 'income' ? INCOME_SERVICES : EXPENSE_CATEGORIES;
+    list.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.name; opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+    suggestPrice();
+  }
+
+  function suggestPrice() {
+    const type = document.getElementById('entryType').value;
+    const cat = document.getElementById('entryCategory').value;
+    const list = type === 'income' ? INCOME_SERVICES : EXPENSE_CATEGORIES;
+    const found = list.find(s => s.name === cat);
+    document.getElementById('priceHint').textContent = found && found.hint ? '💡 Typical: ' + found.hint : '';
+  }
+
+  function refreshBarberDropdown() {
+    const sel = document.getElementById('entryBarber');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Select Barber —</option>';
+    staff.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id; opt.textContent = s.name + ' (' + s.role + ')';
+      sel.appendChild(opt);
+    });
+    if (cur) sel.value = cur;
+  }
+
+  function addEntry() {
+    const type = document.getElementById('entryType').value;
+    const category = document.getElementById('entryCategory').value;
+    const amount = parseFloat(document.getElementById('entryAmount').value);
+    const note = document.getElementById('entryNote').value.trim();
+    const date = document.getElementById('entryDate').value;
+    const barberId = document.getElementById('entryBarber').value;
+    const barberName = barberId ? staff.find(s => s.id == barberId)?.name || '' : '';
+
+    if (!amount || amount <= 0) { alert('Please enter a valid amount.'); return; }
+    if (!date) { alert('Please select a date.'); return; }
+
+    entries.unshift({ id: Date.now(), type, category, amount, note, date, barberId, barberName });
+    save();
+    document.getElementById('entryAmount').value = '';
+    document.getElementById('entryNote').value = '';
+    render();
+  }
+
+  function deleteEntry(id) {
+    entries = entries.filter(e => e.id !== id);
+    save();
+    render();
+  }
+
+  function render() {
+    const todayEntries = entries.filter(e => e.date === todayStr());
+    const income = todayEntries.filter(e => e.type === 'income');
+    const expenses = todayEntries.filter(e => e.type === 'expense');
+
+    const totalIncome = income.reduce((s,e) => s + e.amount, 0);
+    const totalExpense = expenses.reduce((s,e) => s + e.amount, 0);
+    const net = totalIncome - totalExpense;
+    const margin = totalIncome > 0 ? ((net/totalIncome)*100).toFixed(1) : 0;
+    const clientCount = income.length;
+
+    document.getElementById('totalRevenue').textContent = fmt(totalIncome);
+    document.getElementById('totalExpenses').textContent = fmt(totalExpense);
+    document.getElementById('revenueCount').textContent = `${income.length} income entries`;
+    document.getElementById('expenseCount').textContent = `${expenses.length} expense entries`;
+
+    const profitEl = document.getElementById('netProfit');
+    profitEl.textContent = fmt(Math.abs(net));
+    profitEl.className = 'card-value' + (net < 0 ? ' loss' : ' profit');
+
+    document.getElementById('profitMargin').textContent = `${margin}% margin`;
+    document.getElementById('profitMargin').className = 'card-change ' + (net >= 0 ? 'up' : 'down');
+
+    document.getElementById('clientCount').textContent = clientCount;
+    document.getElementById('avgTicket').textContent = `Avg ${fmt(clientCount > 0 ? totalIncome/clientCount : 0)} / client`;
+
+    renderServices(income);
+    renderChart();
+    renderTransactions();
+  }
+
+  function renderServices(income) {
+    const map = {};
+    income.forEach(e => {
+      if (!map[e.category]) map[e.category] = { count:0, total:0 };
+      map[e.category].count++;
+      map[e.category].total += e.amount;
+    });
+    const el = document.getElementById('servicesList');
+    const keys = Object.keys(map);
+    if (!keys.length) { el.innerHTML = '<div class="empty-state">No income recorded today.</div>'; return; }
+    keys.sort((a,b) => map[b].total - map[a].total);
+    el.innerHTML = keys.map(k => `
+      <div class="service-row">
+        <span class="service-name">${k}</span>
+        <span class="service-count">×${map[k].count}</span>
+        <span class="service-total">${fmt(map[k].total)}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderChart() {
+    const labels = [], incomeData = [], expenseData = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const ds = d.toISOString().split('T')[0];
+      const dayEntries = entries.filter(e => e.date === ds);
+      labels.push(d.toLocaleDateString('en-GH', {weekday:'short'}));
+      incomeData.push(dayEntries.filter(e => e.type==='income').reduce((s,e)=>s+e.amount,0));
+      expenseData.push(dayEntries.filter(e => e.type==='expense').reduce((s,e)=>s+e.amount,0));
+    }
+    const maxVal = Math.max(...incomeData, ...expenseData, 1);
+    const chart = document.getElementById('barChart');
+    chart.innerHTML = labels.map((lbl, i) => {
+      const ih = Math.round((incomeData[i]/maxVal)*100);
+      const eh = Math.round((expenseData[i]/maxVal)*100);
+      return `
+        <div class="bar-group">
+          <div style="display:flex;align-items:flex-end;gap:3px;height:100%">
+            <div class="bar income" style="height:${ih}%;flex:1" title="${fmt(incomeData[i])}"></div>
+            <div class="bar expense" style="height:${eh}%;flex:1" title="${fmt(expenseData[i])}"></div>
+          </div>
+          <div class="bar-label">${lbl}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderTransactions() {
+    const el = document.getElementById('transactionsWrap');
+    if (!entries.length) {
+      el.innerHTML = '<div class="empty-state">No transactions yet. Add your first entry above.</div>';
+      return;
+    }
+    const sorted = [...entries].sort((a,b) => b.id - a.id).slice(0, 50);
+    el.innerHTML = `
+      <table class="transactions-table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Type</th><th>Category</th><th>Barber</th><th>Note</th><th>Amount</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map(e => `
+            <tr>
+              <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${e.date}</td>
+              <td><span class="type-badge type-${e.type}">${e.type}</span></td>
+              <td>${e.category}</td>
+              <td style="color:var(--muted);font-size:12px">${e.barberName || '—'}</td>
+              <td style="color:var(--muted);font-size:12px">${e.note || '—'}</td>
+              <td class="amount-${e.type}">${e.type==='income'?'+':'−'} ${fmt(e.amount)}</td>
+              <td><button class="btn-del" onclick="deleteEntry(${e.id})" title="Delete">✕</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function setWeek(mode) {
+    weekMode = mode;
+    document.getElementById('btnThis').className = 'week-btn' + (mode==='this'?' active':'');
+    document.getElementById('btnLast').className = 'week-btn' + (mode==='last'?' active':'');
+    renderChart();
+  }
+
+  function addStaff() {
+    const name = document.getElementById('staffName').value.trim();
+    const role = document.getElementById('staffRole').value;
+    const commission = parseFloat(document.getElementById('staffCommission').value) || 50;
+    if (!name) { alert('Please enter a staff name.'); return; }
+    staff.push({ id: Date.now(), name, role, commission });
+    save();
+    document.getElementById('staffName').value = '';
+    refreshBarberDropdown();
+    renderStaff();
+  }
+
+  function deleteStaff(id) {
+    staff = staff.filter(s => s.id != id);
+    save();
+    refreshBarberDropdown();
+    renderStaff();
+  }
+
+  function renderStaff() {
+    const grid = document.getElementById('staffGrid');
+    const summaryEl = document.getElementById('staffSummary');
+
+    if (!staff.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No staff added yet. Add your first barber above.</div>';
+      summaryEl.style.display = 'none';
+      return;
+    }
+
+    summaryEl.style.display = 'grid';
+
+    const todayEntries = entries.filter(e => e.date === todayStr() && e.type === 'income');
+    let totalCommission = 0;
+    let totalShopCut = 0;
+
+    grid.innerHTML = staff.map(s => {
+      const myEntries = todayEntries.filter(e => e.barberId == s.id);
+      const myRevenue = myEntries.reduce((sum, e) => sum + e.amount, 0);
+      const myCommission = myRevenue * (s.commission / 100);
+      const myShopCut = myRevenue - myCommission;
+      totalCommission += myCommission;
+      totalShopCut += myShopCut;
+      const fillPct = myRevenue > 0 ? Math.min(100, s.commission) : 0;
+
+      return `
+        <div class="staff-card ${myEntries.length > 0 ? 'active-barber' : ''}">
+          <button class="btn-staff-del" onclick="deleteStaff(${s.id})">✕</button>
+          <div class="staff-name">${s.name}</div>
+          <div class="staff-role">${s.role} · ${s.commission}% commission</div>
+          <div class="staff-stat">
+            <span class="staff-stat-label">Today's Revenue</span>
+            <span class="staff-stat-val">${fmt(myRevenue)}</span>
+          </div>
+          <div class="staff-stat">
+            <span class="staff-stat-label">Clients</span>
+            <span class="staff-stat-val">${myEntries.length}</span>
+          </div>
+          <div class="staff-stat">
+            <span class="staff-stat-label">Commission Due</span>
+            <span class="staff-stat-val" style="color:var(--green)">${fmt(myCommission)}</span>
+          </div>
+          <div class="staff-stat">
+            <span class="staff-stat-label">Shop Cut</span>
+            <span class="staff-stat-val" style="color:var(--accent-light)">${fmt(myShopCut)}</span>
+          </div>
+          <div class="staff-commission-bar">
+            <div class="staff-commission-fill" style="width:${fillPct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('staffTotal').textContent = staff.length;
+    document.getElementById('staffCommTotal').textContent = fmt(totalCommission);
+    document.getElementById('shopCut').textContent = fmt(totalShopCut);
+  }
+
+  updateCategoryOptions();
+  refreshBarberDropdown();
+  render();
+</script>
+</body>
+</html>
